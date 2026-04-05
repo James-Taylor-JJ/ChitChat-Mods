@@ -1,39 +1,26 @@
+import json
 import logging
 import socket
 import threading
+import urllib.parse
+import urllib.request
 
 logging.basicConfig(filename="chitchat_server.log", level=logging.INFO, format="%(asctime)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 def get_weather(city):
     """Return a weather string for the given city, or an error message."""
     try:
-        # Step 1: geocode the city name to lat/lon
-        geo_url = ("https://geocoding-api.open-meteo.com/v1/search?"
-                   + urllib.parse.urlencode({"name": city, "count": 1, "language": "en", "format": "json"}))
+        geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(city)}&count=1&format=json"
         with urllib.request.urlopen(geo_url, timeout=5) as r:
-            geo = json.loads(r.read())
- 
-        if not geo.get("results"):
-            return f'** Bot: city "{city}" not found. **'
- 
-        result = geo["results"][0]
-        lat, lon, name = result["latitude"], result["longitude"], result["name"]
-        country = result.get("country", "")
- 
-        # Step 2: fetch current weather for that lat/lon
-        wx_url = ("https://api.open-meteo.com/v1/forecast?"
-                  + urllib.parse.urlencode({
-                      "latitude": lat, "longitude": lon,
-                      "current": "temperature_2m,wind_speed_10m,weathercode",
-                      "wind_speed_unit": "kmh", "format": "json",
-                  }))
+            geo = json.loads(r.read())["results"][0]
+
+        wx_url = f"https://api.open-meteo.com/v1/forecast?latitude={geo['latitude']}&longitude={geo['longitude']}&current=temperature_2m,wind_speed_10m&format=json"
         with urllib.request.urlopen(wx_url, timeout=5) as r:
-            wx = json.loads(r.read())
- 
-        current = wx["current"]
-        temp = current["temperature_2m"]
-        wind = current["wind_speed_10m"]
-        code = current["weathercode"]
+            current = json.loads(r.read())["current"]
+
+        return f"** Bot: {geo['name']}, {geo.get('country','')}: {current['temperature_2m']}°C, wind {current['wind_speed_10m']} km/h **"
+    except Exception:
+        return f'** Bot: could not get weather for "{city}" **'
  
         # WMO weather codes -> readable description
         conditions = {
