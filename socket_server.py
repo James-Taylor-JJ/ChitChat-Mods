@@ -21,15 +21,24 @@ class ServerThread(threading.Thread):
         try:
             self.name_label = self.reader.readline().strip()
             self.server.broadcast(f"**[{self.name_label}] Entered**")
-
+            logging.info("CONNECT | %s", self.name_label)
+            self.server.broadcast(f"**[{self.name_label}] Entered**")
+            
             for data in self.reader:
                 data = data.strip()
-                self.server.broadcast(f"[{self.name_label}] {data}")
+                if data == "/users":
+                    with self.server.lock:
+                        names = [c.name_label for c in self.server.clients]
+                    self.send("**Users: " + ", ".join(names) + "**")
+                else:
+                    logging.info("MESSAGE | %s: %s", self.name_label, data)
+                    self.server.broadcast(f"[{self.name_label}] {data}")
         except Exception as e:
             print(f"Error handling client communication: {e} ---->")
         finally:
             self.server.remove_thread(self)
             self.server.broadcast(f"**[{self.name_label}] Left**")
+            logging.info("DISCONNECT | %s", self.name_label)
             try:
                 print(f"{self.client_socket.getpeername()} - [{self.name_label}] Exit")
             except OSError:
@@ -59,6 +68,7 @@ class SocketServer:
 
     def broadcast(self, message):
         print(message)
+        logging.info("BROADCAST | %s", message)
         with self.lock:
             for client in self.clients:
                 try:
@@ -76,6 +86,7 @@ class SocketServer:
             while True:
                 client_socket, addr = server_socket.accept()
                 print(f"{addr} connect")
+                logging.info("NEW CONNECTION | %s", addr)
 
                 thread = ServerThread(self, client_socket)
                 self.add_thread(thread)
