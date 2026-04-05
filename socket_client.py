@@ -7,7 +7,7 @@ from tkinter import simpledialog, scrolledtext
 class SocketClient(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Chit Chat")
+        self.title("Chit Chat  |  /users  /weather <city>")
         self.configure(bg="#330000")
         self.geometry("325x411")
         self.resizable(True, True)
