@@ -19,6 +19,12 @@ class SocketClient(tk.Tk):
         self._build_ui()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
+        menubar = tk.Menu(self)
+        help_menu = tk.Menu(menubar, tearoff=0)
+        help_menu.add_command(label="How to use ChitChat", command=self._show_help)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        self.config(menu=menubar)
+
     def _build_ui(self):
         self.text_area = scrolledtext.ScrolledText(
             self,
@@ -40,6 +46,19 @@ class SocketClient(tk.Tk):
         self.input_field.pack(fill=tk.X, side=tk.BOTTOM)
         self.input_field.bind("<Return>", self._send_message)
         self.input_field.focus_set()
+
+    def _show_help(self):
+        win = tk.Toplevel(self)
+        win.title("How to use ChitChat")
+        win.geometry("500x400")
+        text = scrolledtext.ScrolledText(win, wrap=tk.WORD)
+        text.pack(fill=tk.BOTH, expand=True)
+        try:
+            with open("USAGE.md", "r") as f:
+                text.insert(tk.END, f.read())
+        except OSError:
+            text.insert(tk.END, "Help file not found.")
+        text.config(state=tk.DISABLED)
 
     def server_connection(self):
         ip = simpledialog.askstring(
