@@ -1,6 +1,8 @@
+import logging
 import socket
 import threading
 
+logging.basicConfig(filename="chitchat_server.log", level=logging.INFO, format="%(asctime)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 class ServerThread(threading.Thread):
     def __init__(self, server, client_socket):
